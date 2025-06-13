@@ -1,0 +1,11 @@
+v1
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-939271bd-0498-4aca-93e2-f842a19cac7a-c000.json","size":0,"isDir":false,"modificationTime":1749027785663,"blockReplication":3,"blockSize":134217728,"action":"add"}
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-5ba59154-ffa6-4062-ae23-f78361880c6e-c000.json","size":270,"isDir":false,"modificationTime":1749027817241,"blockReplication":3,"blockSize":134217728,"action":"add"}
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-04da4e8e-b842-4ce9-ac51-96dd011f9a9a-c000.json","size":270,"isDir":false,"modificationTime":1749027855257,"blockReplication":3,"blockSize":134217728,"action":"add"}
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-97682031-b4da-49bd-b255-86ba21d83cd2-c000.json","size":2430,"isDir":false,"modificationTime":1749027865201,"blockReplication":3,"blockSize":134217728,"action":"add"}
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-254e6cfc-9265-45f3-ac3d-eb395ea95998-c000.json","size":270,"isDir":false,"modificationTime":1749115113949,"blockReplication":3,"blockSize":134217728,"action":"add"}
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-adcd0212-6ae8-4445-b16f-1a8750faa225-c000.json","size":270,"isDir":false,"modificationTime":1749115126644,"blockReplication":3,"blockSize":134217728,"action":"add"}
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-aa8baf27-7b11-4e1d-aa12-f066f7ba4e08-c000.json","size":270,"isDir":false,"modificationTime":1749115185438,"blockReplication":3,"blockSize":134217728,"action":"add"}
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-03998aba-56f6-4b9c-9d37-4fb0ed10440d-c000.json","size":270,"isDir":false,"modificationTime":1749115192865,"blockReplication":3,"blockSize":134217728,"action":"add"}
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-78916975-3143-42f1-8398-a7beec6fa218-c000.json","size":270,"isDir":false,"modificationTime":1749115200217,"blockReplication":3,"blockSize":134217728,"action":"add"}
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-ceca8155-d482-45f0-bc3c-02e0d14ec02e-c000.json","size":273,"isDir":false,"modificationTime":1749807046159,"blockReplication":3,"blockSize":134217728,"action":"add"}

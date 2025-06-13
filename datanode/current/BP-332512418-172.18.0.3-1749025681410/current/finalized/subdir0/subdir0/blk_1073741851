@@ -1,0 +1,2 @@
+v1
+{"path":"hdfs://namenode:8020/user/predictions/part-00000-f89e71e1-73a0-47ff-992f-0de604095cfd-c000.json","size":271,"isDir":false,"modificationTime":1749808021654,"blockReplication":3,"blockSize":134217728,"action":"add"}
