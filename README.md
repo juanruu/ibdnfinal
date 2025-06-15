@@ -1,88 +1,57 @@
-# Práctica Final - IBDN
+**PRÁCTICA FINAL IBDN**
 
-Autores: Ignacio Moyano Fernández y Juan Pérez Picciolato  
-
-Este proyecto consiste en el despliegue de una arquitectura distribuida que permite realizar **predicciones en tiempo real sobre retrasos de vuelos**, utilizando un modelo predictivo basado en **Random Forest** entrenado con datos históricos.
-
+*Ignacio Moyano Fernández y Juan Pérez Picciolato*  
 ---
 
-## Objetivo
+*link a los recursos mencionados: [https://github.com/juanruu/ibdnfinal2/tree/main](https://github.com/juanruu/ibdnfinal2/tree/main)*
 
-A partir de un dataset de vuelos pasados (con información sobre si salieron con retraso o no), se entrena un modelo de predicción. La arquitectura desplegada permite recibir solicitudes de predicción en tiempo real y devolver resultados mediante una integración de servicios.
+Tenemos un dataset que contiene información de vuelos pasados, incluyendo si han salido con retraso o no. A partir de esta información, queremos predecir si va a haber retrasos en un vuelo futuro. Para ello, entrenamos un modelo predictivo basado en el algoritmo RandomForest utilizando los datos que tenemos de vuelos antiguos. 
 
----
+Tenemos que desplegar una arquitectura completa que nos permita, utilizando el modelo predictivo que hemos creado, realizar predicciones en tiempo real para nuevos vuelos.
 
-## Arquitectura desplegada
+El escenario de la práctica requiere desplegar los diferentes servicios que se muestran a continuación. Distinguimos 4 partes principales:  
+	  
+![Arquitectura general](images/flujo_final.png)
 
-El sistema se divide en 4 partes principales:
 
----
+1. **Dockerización de la arquitectura base**   
+     
+   La primera parte de la práctica consiste en Dockerizar todos los servicios involucrados. Para ello creamos un docker compose que despliegue primeramente:  
+     
+- Flask: mediante una imagen de python que descargaba todos los requerimientos necesarios y ejecutaba el script predict\_flask.py
 
-### 1. Dockerización de la arquitectura base
 
-Todos los servicios están contenidos en un `docker-compose.yml`, que despliega:
+- Kafka: mediante la imagen bitnami/kafka:3.9 y un script ([start-kafka.sh](http://start-kafka.sh)) el   cual se encargaba de desplegar el tópico que transmitía la solicitud (flask-ml-delays-request).
 
-- **Flask**: API web desarrollada en Python que recibe solicitudes de predicción. Se basa en una imagen con los requerimientos instalados y ejecuta `predict_flask.py`.
+- Spark: mediante la imagen bitnami/spark:3.5.3 deberemos crear 4 contenedores distintos pues el despliegue requería que fuera distribuido. Uno para el master y uno para cada worker (dos). Además un cuarto contenedor encargado de realizar el spark-submit el cual compila y ejecuta el código Scala para realizar la predicción.
 
-- **Kafka**: Sistema de mensajería usando `bitnami/kafka:3.9`. Se despliega el tópico `flask-ml-delays-request` mediante un script `start-kafka.sh`.
+- Mongo: mediante la imagen mongo:4.0 desplegamos un contenedor que se encargará de crear una colección donde guardaremos los datos históricos (generados con el script import\_distances.sh) que usa Scala para entrenar el modelo.
 
-- **Spark (bitnami/spark:3.5.3)**:
-  - 1 contenedor para el **Spark Master**
-  - 2 contenedores para los **Spark Workers**
-  - 1 contenedor adicional para el **spark-submit**, que compila y ejecuta el código Scala para generar predicciones
 
-- **MongoDB**: Base de datos NoSQL (`mongo:4.0`) que almacena los datos históricos utilizados por Spark para entrenar el modelo. Estos datos se insertan mediante el script `import_distances.sh`.
+  Podemos observar el correcto despliegue distribuido del cluster de Spark dentro de la interfaz web del Spark Master:
 
-> El correcto despliegue del clúster de Spark puede observarse desde la interfaz web del Spark Master.
+![Spark](images/spark.png)
 
----
+2. **Escritura de la predicciones en Kafka** 
 
-### 2. Escritura de las predicciones en Kafka
+En el escenario anterior las predicciones se guardaban solo en Mongo y era desde ahí donde Flask las leía. En este punto tuvimos que crear otro tópico (flask-ml-delays-responses) añadir código en Scala para guardar las predicciones en ese tópico y añadir código en Flask para obtener las predicciones desde Kafka.
 
-Inicialmente, las predicciones se guardaban en Mongo y Flask las consultaba desde ahí.
+3. **Despliegue de NiFi para guardar las predicciones en un fichero txt**
 
-Posteriormente:
-- Se creó un nuevo tópico `flask-ml-delays-responses`.
-- Se añadió lógica en **Scala** para publicar las predicciones en ese tópico.
-- Se modificó **Flask** para recuperar las predicciones directamente desde Kafka.
+Tuvimos que despegar un servicio nifi (herramienta de automatización de flujos) para definir un flujo que obtenía la predicción anteriormente guardada en el tópico de kafka, y guardarla tal cual en un archivo txt de manera automática cada 10 segundos.   
+Para ello desplegamos otro contenedor que usaba la imagen apache/nifi:1.25. Definimos las claves para entrar en la interfaz web y, desde ahí, creamos un flujo que consistía de dos producers y un connector.
 
----
+![Nifi1](images/nifi1.png)
+![Nifi2](images/nifi2.png)
 
-### 3. Integración con Apache NiFi
+4. **Escritura de las predicciones en HDFS**
 
-Se desplegó un servicio adicional usando la imagen `apache/nifi:1.25.0`, con acceso a su interfaz web protegida por credenciales.
+En último lugar tuvimos que guardar las predicciones en HDFS una base de datos distribuida la cual la componen dos nodos (datanode y namenode). 
 
-- Desde la interfaz se definió un flujo que:
-  - Lee las predicciones del tópico Kafka
-  - Las guarda automáticamente en un archivo `.txt` cada 10 segundos
-  - Usa dos **Producers** y un **Connector**
+También dockerizamos esta parte, usando las imágenes bde2020/hadoop-namenode/datanode:2.0.0-hadoop3.2.1-java y 2 contenedores uno para el NameNode encargado de coordinar el sistema y otro para el DataNode que almacena físicamente la predicción.
 
----
+Podemos observar el correcto almacenamiento de las predicciones desde la interfaz web y desde el propio contenedor:
 
-### 4. Almacenamiento de predicciones en HDFS
+![Spark](images/hdfs1.png)
 
-Se añadió soporte para almacenar las predicciones en un sistema de archivos distribuido (HDFS):
-
-- Despliegue usando las imágenes:
-  - `bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8`
-  - `bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8`
-
-- Se configuraron:
-  - Un **NameNode** (gestiona el sistema de ficheros)
-  - Un **DataNode** (almacena físicamente los archivos de predicción)
-
-> La correcta escritura en HDFS puede validarse desde la interfaz web del NameNode o desde el contenedor.
-
----
-
-## Tecnologías utilizadas
-
-- Docker & Docker Compose
-- Apache Kafka
-- Apache Spark (Scala)
-- Apache NiFi
-- MongoDB
-- Hadoop HDFS
-- Flask (Python)
-- SBT (Scala Build Tool)
-
+![Spark](images/hdfs2.png)
